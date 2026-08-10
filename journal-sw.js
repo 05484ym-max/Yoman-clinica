@@ -1,7 +1,8 @@
-// ✏️ Service Worker פשוט - שומר עותק של הדף במטמון, כדי שהיומן יעבוד גם בלי אינטרנט
-// ושהדפדפן יאפשר "התקנה כאפליקציה". אין צורך לגעת בקובץ הזה בדרך כלל.
+// ✏️ Service Worker - גרסה מתוקנת (network-first): תמיד מנסה קודם להביא את הגרסה
+// העדכנית מהאינטרנט. משתמש בגרסה השמורה (cache) רק אם אין בכלל אינטרנט.
+// זה מונע את הבעיה שבה עדכונים לא מגיעים גם אחרי רענון קשיח.
 
-const CACHE_NAME = 'clinic-journal-v1';
+const CACHE_NAME = 'clinic-journal-v2'; // ✏️ כל פעם שמעדכנים באמת את journal.html, כדאי להעלות את המספר כאן ב-1
 const FILES_TO_CACHE = [
   './journal.html',
   './journal-manifest.json',
@@ -13,7 +14,7 @@ self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => cache.addAll(FILES_TO_CACHE))
   );
-  self.skipWaiting();
+  self.skipWaiting(); // ✏️ גורם לגרסה החדשה של ה-Service Worker "לתפוס פיקוד" מיד, בלי לחכות שכל הטאבים ייסגרו
 });
 
 self.addEventListener('activate', (event) => {
@@ -27,6 +28,12 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
   event.respondWith(
-    caches.match(event.request).then((cached) => cached || fetch(event.request))
+    // ✏️ קודם מנסים רשת (הגרסה העדכנית באמת) - רק אם זה נכשל (אין אינטרנט), נופלים חזרה לעותק השמור
+    fetch(event.request)
+      .then((networkResponse) => {
+        caches.open(CACHE_NAME).then((cache) => cache.put(event.request, networkResponse.clone()));
+        return networkResponse;
+      })
+      .catch(() => caches.match(event.request))
   );
 });
