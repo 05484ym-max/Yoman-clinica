@@ -2,12 +2,12 @@
 // העדכנית מהאינטרנט. משתמש בגרסה השמורה (cache) רק אם אין בכלל אינטרנט.
 // זה מונע את הבעיה שבה עדכונים לא מגיעים גם אחרי רענון קשיח.
 
-const CACHE_NAME = 'clinic-journal-v4'; // ✏️ כל פעם שמעדכנים באמת את journal.html, כדאי להעלות את המספר כאן ב-1
+const CACHE_NAME = 'clinic-journal-v5'; // ✏️ כל פעם שמעדכנים באמת את journal.html, כדאי להעלות את המספר כאן ב-1
 const FILES_TO_CACHE = [
   './journal.html',
   './journal-manifest.json',
-  './icon-192.png',
-  './icon-512.png'
+  './icon-192.png?v=2',
+  './icon-512.png?v=2'
 ];
 
 self.addEventListener('install', (event) => {
