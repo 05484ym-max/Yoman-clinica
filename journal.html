@@ -34,7 +34,7 @@
     background: var(--cream);
     color: var(--text-dark);
     min-height:100vh;
-    padding: 28px 16px 60px;
+    padding: 28px 16px 96px;
   }
   ::-webkit-scrollbar{ width:6px; }
   ::-webkit-scrollbar-thumb{ background: var(--gold); border-radius:10px; }
@@ -69,8 +69,69 @@
   }
   .tab-btn.active{ background:var(--gold); color:#000; }
 
-  .month-nav{ display:flex; align-items:center; justify-content:center; gap:20px; margin-bottom:16px; }
+  /* ✏️ תפריט תחתון קבוע - מחליף את שורת הטאבים שהייתה למעלה (יומן/סטטיסטיקות),
+     ומוסיף אליה גם "קביעת תורים" - בהשראת התפריט התחתון של פאנל הבלאק פון */
+  .bottom-nav{
+    position:fixed; bottom:0; left:0; right:0; z-index:1500;
+    display:flex; gap:6px;
+    background:rgba(251,246,234,0.97);
+    backdrop-filter:blur(10px);
+    -webkit-backdrop-filter:blur(10px);
+    border-top:1px solid rgba(184,147,79,0.28);
+    padding:8px 14px calc(8px + env(safe-area-inset-bottom, 0px)) 14px;
+    box-shadow:0 -8px 24px rgba(154,116,20,0.12);
+  }
   .nav-btn{
+    flex:1; display:flex; flex-direction:column; align-items:center; gap:3px;
+    background:transparent; border:none; cursor:pointer;
+    padding:6px 0; border-radius:14px;
+    color:var(--text-soft);
+    font-family:'Rubik', sans-serif; font-weight:700;
+  }
+  .nav-btn span{ font-size:10.5px; }
+  .nav-icon{ width:20px; height:20px; }
+  .nav-btn.active{ color:var(--gold-deep); background:rgba(184,147,79,0.14); }
+
+  /* ✏️ ווידג'ט "קביעת תורים" - נשען על אותו Apps Script של אתר הלקוחות
+     (getTreatments / getMonthAvailability / getSlots / bookAppointment), כדי
+     שהזמינות תמיד תואמת למה שכבר נקבע שם ולא ייווצרו התנגשויות */
+  select.booking-date-input{
+    width:100%; padding:11px 14px; border-radius:12px; border:1.5px solid rgba(184,147,79,0.4);
+    background:rgba(255,255,255,0.7); color:var(--text-dark); font-family:'Assistant', sans-serif;
+    font-weight:600; font-size:14px; outline:none; margin-bottom:6px;
+  }
+  select.booking-date-input:focus{ border-color:var(--gold); }
+  .client-cal-nav{ display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
+  .client-cal-nav-btn{
+    background:none; border:1.5px solid var(--gold); color:var(--gold-deep);
+    width:30px; height:30px; border-radius:50%; font-size:16px; line-height:1; cursor:pointer;
+  }
+  .client-cal-nav-btn:disabled{ opacity:0.3; cursor:not-allowed; }
+  .client-cal-month-label{ font-family:'Playfair Display', serif; font-weight:700; font-size:14px; }
+  .client-cal-weekdays{ display:grid; grid-template-columns:repeat(7,1fr); text-align:center; font-size:11px; font-weight:700; color:var(--text-soft); margin-bottom:6px; }
+  .client-cal-grid{ display:grid; grid-template-columns:repeat(7,1fr); gap:5px; }
+  .client-cal-cell{
+    aspect-ratio:1/1; display:flex; align-items:center; justify-content:center;
+    border-radius:10px; font-size:12px; font-weight:700; font-family:'Assistant', sans-serif;
+  }
+  .client-cal-cell.empty{ visibility:hidden; }
+  .client-cal-cell.unavailable{ color:var(--text-soft); opacity:0.35; }
+  .client-cal-cell.available{
+    background:rgba(184,147,79,0.1); border:1.5px solid var(--gold); color:var(--gold-deep); cursor:pointer;
+  }
+  .client-cal-cell.available:hover{ background:rgba(184,147,79,0.22); }
+  .client-cal-cell.selected{ background:var(--gold); color:#000; border-color:var(--gold); }
+  .slots-grid{ display:flex; flex-wrap:wrap; gap:9px; }
+  .slot-btn{
+    flex:0 0 auto; padding:9px 16px; border-radius:30px; border:1.5px solid var(--gold);
+    background:transparent; color:var(--text-dark); font-family:'Assistant', sans-serif;
+    font-weight:700; font-size:14px; cursor:pointer;
+  }
+  .slot-btn.selected{ background:var(--gold); color:#000; }
+  .slots-note{ color:var(--text-soft); font-size:13px; padding:6px 0; }
+
+  .month-nav{ display:flex; align-items:center; justify-content:center; gap:20px; margin-bottom:16px; }
+  .month-nav-btn{
     width:34px; height:34px; border-radius:50%; border:1.5px solid var(--gold);
     background:transparent; color:var(--gold-deep); font-size:18px; cursor:pointer;
   }
@@ -191,15 +252,10 @@
   <button class="install-btn" id="installBtn">התקנה</button>
 </div>
 
-<div class="tabs">
-  <button class="tab-btn active" id="tabCalendar" onclick="switchView('calendar')">יומן</button>
-  <button class="tab-btn" id="tabStats" onclick="switchView('stats')">סטטיסטיקות</button>
-</div>
-
-<div class="month-nav">
-  <button class="nav-btn" onclick="changeMonth(-1)">‹</button>
+<div class="month-nav" id="monthNav">
+  <button class="month-nav-btn" onclick="changeMonth(-1)">‹</button>
   <div class="month-label" id="monthLabel"></div>
-  <button class="nav-btn" onclick="changeMonth(1)">›</button>
+  <button class="month-nav-btn" onclick="changeMonth(1)">›</button>
 </div>
 
 <div id="viewCalendar">
@@ -243,6 +299,51 @@
   </div>
 </div>
 
+<!-- ✏️ קביעת תורים - מציג אותם טיפולים/זמינות/שעות פנויות של אתר הלקוחות (Apps Script
+     משותף), כדי שתור שנקבע כאן ייספר גם שם ולהפך, בלי התנגשויות -->
+<div id="viewBooking" style="display:none;">
+  <div class="card" style="text-align:right;">
+    <div class="form-label">בחירת טיפול</div>
+    <select id="bkTreatment" class="booking-date-input">
+      <option value="">טוענת רשימת טיפולים...</option>
+    </select>
+
+    <div id="bkDateStep" style="display:none; margin-top:16px;">
+      <div class="form-label">בחירת תאריך</div>
+      <div class="client-cal-nav">
+        <button type="button" class="client-cal-nav-btn" onclick="changeBkMonth(-1)">‹</button>
+        <div id="bkMonthLabel" class="client-cal-month-label"></div>
+        <button type="button" class="client-cal-nav-btn" onclick="changeBkMonth(1)">›</button>
+      </div>
+      <div class="client-cal-weekdays">
+        <span>א</span><span>ב</span><span>ג</span><span>ד</span><span>ה</span><span>ו</span><span>ש</span>
+      </div>
+      <div id="bkCalGrid" class="client-cal-grid"></div>
+      <div id="bkCalLoading" class="slots-note" style="display:none;">טוענת זמינות...</div>
+    </div>
+
+    <div id="bkSlotsStep" style="display:none; margin-top:16px;">
+      <div class="form-label">בחירת שעה</div>
+      <div id="bkSlotsLoading" class="slots-note" style="display:none;">טוענת שעות פנויות...</div>
+      <div id="bkSlotsEmpty" class="slots-note" style="display:none;">אין תורים פנויים בתאריך זה, נסי תאריך אחר</div>
+      <div id="bkSlotsGrid" class="slots-grid"></div>
+    </div>
+
+    <div id="bkFormStep" style="display:none; margin-top:16px;">
+      <div id="bkSummary" class="modal-summary" style="display:block;"></div>
+      <input type="text" id="bkName" placeholder="שם הלקוחה">
+      <input type="tel" id="bkPhone" placeholder="מספר טלפון">
+      <div id="bkError" class="form-error" style="display:none;"></div>
+      <button class="add-btn" onclick="submitStaffBooking()">קביעת התור</button>
+    </div>
+
+    <div id="bkSuccessStep" style="display:none; margin-top:16px; text-align:center;">
+      <div id="bkSuccessText" class="modal-summary" style="display:block;">התור נקבע בהצלחה!</div>
+      <button class="add-btn" onclick="resetBookingWidget()">קביעת תור נוסף</button>
+    </div>
+  </div>
+</div>
+
 <!-- חלונית יום -->
 <div id="dayModal" class="modal-overlay" onclick="if(event.target===this) closeDayModal()">
   <div class="modal-card">
@@ -267,6 +368,22 @@
   </div>
 </div>
 
+<!-- ✏️ תפריט תחתון - יומן / סטטיסטיקות / קביעת תורים, בהשראת התפריט התחתון של פאנל הבלאק פון -->
+<div class="bottom-nav">
+  <button class="nav-btn active" id="tabCalendar" onclick="switchView('calendar')">
+    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+    <span>יומן</span>
+  </button>
+  <button class="nav-btn" id="tabStats" onclick="switchView('stats')">
+    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg>
+    <span>סטטיסטיקות</span>
+  </button>
+  <button class="nav-btn" id="tabBooking" onclick="switchView('booking')">
+    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="12" y1="14" x2="12" y2="18"/><line x1="10" y1="16" x2="14" y2="16"/></svg>
+    <span>קביעת תורים</span>
+  </button>
+</div>
+
 </div>
 <!-- סוף appScreen -->
 
@@ -278,6 +395,11 @@
 
   // ✏️ הדביקי כאן את כתובת ה-Web App שקיבלת מ-JournalCode.gs אחרי הפריסה
   const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx9lgP-lvOAX6qloxrdmHE4L9Odxsdu-vO8DhYQ6vvEzpvXv4f0imr0ZjtOfgepdjGa/exec';
+
+  // ✏️ אותו Apps Script בדיוק ששולט על "קביעת תורים" באתר הלקוחות (miriamomesi.co.il) -
+  // כדי שתור שנקבע כאן ייבדק ויירשם באותו מקום בדיוק, ולא ייווצרו התנגשויות בין תור
+  // שנקבע כאן לתור שלקוחה קובעת בעצמה באתר
+  const BOOKING_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxqGHEFPrrOSrkD_MAei0nnCKjUjkMggbowUN_Gpg1wXGuXf7KLaz6GCuvf0TLA_nPTGQ/exec';
 
   // ✏️ רושמים את התוסף שמציג מספרים ישירות על העמודות בגרף (רק במקומות שנבקש זאת בפירוש)
   if(typeof ChartDataLabels !== 'undefined') Chart.register(ChartDataLabels);
@@ -361,9 +483,14 @@
     currentView = view;
     document.getElementById('tabCalendar').classList.toggle('active', view === 'calendar');
     document.getElementById('tabStats').classList.toggle('active', view === 'stats');
+    document.getElementById('tabBooking').classList.toggle('active', view === 'booking');
     document.getElementById('viewCalendar').style.display = view === 'calendar' ? 'block' : 'none';
     document.getElementById('viewStats').style.display = view === 'stats' ? 'block' : 'none';
-    render();
+    document.getElementById('viewBooking').style.display = view === 'booking' ? 'block' : 'none';
+    // ✏️ ניווט החודשים למעלה שייך ליומן/סטטיסטיקות בלבד - בקביעת תורים יש לוח שנה נפרד משלה
+    document.getElementById('monthNav').style.display = view === 'booking' ? 'none' : 'flex';
+    if(view === 'booking') initBooking();
+    else render();
   }
 
   function changeMonth(delta){
@@ -695,6 +822,237 @@
     const div = document.createElement('div');
     div.textContent = str;
     return div.innerHTML;
+  }
+
+  /* =========================================================
+     ✏️ קביעת תורים - קוראת לאותו Apps Script של אתר הלקוחות
+     (getTreatments / getMonthAvailability / getSlots / bookAppointment),
+     כדי שהזמינות והשעות התפוסות תמיד יהיו מסונכרנות עם מה שלקוחות כבר
+     קבעו בעצמן באתר, ולא תיווצר התנגשות בין תור שנקבע כאן לתור שנקבע שם
+  ========================================================= */
+  let bkTreatmentsLoaded = false;
+  let bkTreatment = null, bkSelectedDate = null, bkSelectedTime = null;
+  const bkToday = new Date();
+  const bkMinYear = bkToday.getFullYear(), bkMinMonth = bkToday.getMonth() + 1;
+  const bkMaxDateObj = new Date(bkToday.getFullYear(), bkToday.getMonth() + 2, 1);
+  const bkMaxYear = bkMaxDateObj.getFullYear(), bkMaxMonth = bkMaxDateObj.getMonth() + 1;
+  let bkCalYear = bkMinYear, bkCalMonth = bkMinMonth;
+  let bkAvailability = {};
+
+  function initBooking(){
+    if(bkTreatmentsLoaded) return;
+    bkTreatmentsLoaded = true;
+    loadBookingTreatments();
+  }
+
+  async function loadBookingTreatments(){
+    const sel = document.getElementById('bkTreatment');
+    try{
+      const res = await fetch(`${BOOKING_APPS_SCRIPT_URL}?action=getTreatments`);
+      const data = await res.json();
+      sel.innerHTML = '<option value="">בחרי טיפול...</option>';
+      if(!data.success || !data.treatments || !data.treatments.length){
+        sel.innerHTML = '<option value="">אין טיפולים זמינים כרגע</option>';
+        return;
+      }
+      data.treatments.forEach(t => {
+        const opt = document.createElement('option');
+        opt.value = t.name;
+        opt.textContent = `${t.name} (${t.duration} דק')`;
+        sel.appendChild(opt);
+      });
+    }catch(err){
+      sel.innerHTML = '<option value="">שגיאה בטעינת הטיפולים</option>';
+    }
+  }
+
+  document.getElementById('bkTreatment').addEventListener('change', () => {
+    const val = document.getElementById('bkTreatment').value;
+    hideBkError();
+    document.getElementById('bkDateStep').style.display = val ? 'block' : 'none';
+    document.getElementById('bkSlotsStep').style.display = 'none';
+    document.getElementById('bkFormStep').style.display = 'none';
+    document.getElementById('bkSuccessStep').style.display = 'none';
+    bkSelectedDate = null;
+    bkSelectedTime = null;
+    if(!val){ bkTreatment = null; return; }
+    bkTreatment = val;
+    bkCalYear = bkMinYear;
+    bkCalMonth = bkMinMonth;
+    loadBookingCalendarMonth();
+  });
+
+  function changeBkMonth(delta){
+    let y = bkCalYear, m = bkCalMonth + delta;
+    if(m < 1){ m = 12; y--; }
+    if(m > 12){ m = 1; y++; }
+    if(y < bkMinYear || (y === bkMinYear && m < bkMinMonth)) return;
+    if(y > bkMaxYear || (y === bkMaxYear && m > bkMaxMonth)) return;
+    bkCalYear = y; bkCalMonth = m;
+    loadBookingCalendarMonth();
+  }
+
+  async function loadBookingCalendarMonth(){
+    const loadingEl = document.getElementById('bkCalLoading');
+    const gridEl = document.getElementById('bkCalGrid');
+    loadingEl.style.display = 'block';
+    gridEl.innerHTML = '';
+    try{
+      const url = `${BOOKING_APPS_SCRIPT_URL}?action=getMonthAvailability&year=${bkCalYear}&month=${bkCalMonth}&treatment=${encodeURIComponent(bkTreatment)}`;
+      const res = await fetch(url);
+      const data = await res.json();
+      loadingEl.style.display = 'none';
+      if(!data.success){
+        showBkError(data.error || 'אירעה שגיאה בטעינת הזמינות');
+        return;
+      }
+      bkAvailability = data.days || {};
+      renderBookingCalendar();
+    }catch(err){
+      loadingEl.style.display = 'none';
+      showBkError('אירעה שגיאה, נסי שוב');
+    }
+  }
+
+  function renderBookingCalendar(){
+    document.getElementById('bkMonthLabel').textContent = `${HEBREW_MONTHS[bkCalMonth-1]} ${bkCalYear}`;
+    document.querySelectorAll('#viewBooking .client-cal-nav-btn')[0].disabled =
+      (bkCalYear === bkMinYear && bkCalMonth === bkMinMonth);
+    document.querySelectorAll('#viewBooking .client-cal-nav-btn')[1].disabled =
+      (bkCalYear === bkMaxYear && bkCalMonth === bkMaxMonth);
+
+    const grid = document.getElementById('bkCalGrid');
+    grid.innerHTML = '';
+    const firstWeekday = new Date(bkCalYear, bkCalMonth-1, 1).getDay();
+    const daysInMonth = new Date(bkCalYear, bkCalMonth, 0).getDate();
+
+    for(let i=0; i<firstWeekday; i++){
+      const empty = document.createElement('div');
+      empty.className = 'client-cal-cell empty';
+      grid.appendChild(empty);
+    }
+    for(let d=1; d<=daysInMonth; d++){
+      const key = dateKey(bkCalYear, bkCalMonth, d);
+      const isAvailable = !!bkAvailability[key];
+      const cell = document.createElement('div');
+      cell.className = 'client-cal-cell ' + (isAvailable ? 'available' : 'unavailable') + (key === bkSelectedDate ? ' selected' : '');
+      cell.textContent = d;
+      if(isAvailable) cell.onclick = () => selectBkDate(key);
+      grid.appendChild(cell);
+    }
+  }
+
+  function selectBkDate(key){
+    bkSelectedDate = key;
+    bkSelectedTime = null;
+    renderBookingCalendar();
+    hideBkError();
+    document.getElementById('bkFormStep').style.display = 'none';
+    document.getElementById('bkSuccessStep').style.display = 'none';
+    loadBookingSlots(key);
+  }
+
+  async function loadBookingSlots(dateStr){
+    const step = document.getElementById('bkSlotsStep');
+    const loadingEl = document.getElementById('bkSlotsLoading');
+    const emptyEl = document.getElementById('bkSlotsEmpty');
+    const gridEl = document.getElementById('bkSlotsGrid');
+    step.style.display = 'block';
+    gridEl.innerHTML = '';
+    emptyEl.style.display = 'none';
+    loadingEl.style.display = 'block';
+    try{
+      const url = `${BOOKING_APPS_SCRIPT_URL}?action=getSlots&date=${encodeURIComponent(dateStr)}&treatment=${encodeURIComponent(bkTreatment)}`;
+      const res = await fetch(url);
+      const data = await res.json();
+      loadingEl.style.display = 'none';
+      if(!data.success){
+        showBkError(data.error || 'אירעה שגיאה בטעינת השעות הפנויות');
+        return;
+      }
+      if(!data.slots || !data.slots.length){
+        emptyEl.style.display = 'block';
+        return;
+      }
+      data.slots.forEach(time => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'slot-btn';
+        btn.textContent = time;
+        btn.onclick = () => selectBkSlot(time);
+        gridEl.appendChild(btn);
+      });
+    }catch(err){
+      loadingEl.style.display = 'none';
+      showBkError('אירעה שגיאה, נסי שוב');
+    }
+  }
+
+  function selectBkSlot(time){
+    bkSelectedTime = time;
+    document.querySelectorAll('#bkSlotsGrid .slot-btn').forEach(b => b.classList.toggle('selected', b.textContent === time));
+    const dateObj = new Date(bkSelectedDate + 'T12:00:00');
+    const formattedDate = dateObj.toLocaleDateString('he-IL', { day:'numeric', month:'long', year:'numeric' });
+    document.getElementById('bkSummary').textContent = `${bkTreatment} · ${formattedDate} בשעה ${time}`;
+    hideBkError();
+    document.getElementById('bkFormStep').style.display = 'block';
+    document.getElementById('bkSuccessStep').style.display = 'none';
+  }
+
+  // ✏️ שולחת את הבקשה לאותו bookAppointment שאתר הלקוחות משתמש בו - אם השעה נתפסה
+  // בינתיים ע"י לקוחה אחרת, השרת ידחה את הבקשה והשעות הפנויות יתרעננו אוטומטית
+  async function submitStaffBooking(){
+    hideBkError();
+    const name = document.getElementById('bkName').value.trim();
+    const phone = document.getElementById('bkPhone').value.trim();
+    if(!name || !phone){
+      showBkError('נא למלא שם וטלפון');
+      return;
+    }
+    if(!bkTreatment || !bkSelectedDate || !bkSelectedTime){
+      showBkError('נא לבחור טיפול, תאריך ושעה');
+      return;
+    }
+    try{
+      const res = await fetch(BOOKING_APPS_SCRIPT_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({
+          action: 'bookAppointment',
+          date: bkSelectedDate,
+          time: bkSelectedTime,
+          treatment: bkTreatment,
+          name: name, phone: phone, email: ''
+        })
+      });
+      const data = await res.json();
+      if(!data.success){
+        showBkError(data.error || 'התור לא נקבע - ייתכן שהשעה נתפסה, בחרי שעה אחרת');
+        loadBookingSlots(bkSelectedDate);
+        return;
+      }
+      document.getElementById('bkFormStep').style.display = 'none';
+      document.getElementById('bkSuccessStep').style.display = 'block';
+    }catch(err){
+      showBkError('אירעה שגיאה בשמירה, נסי שוב');
+    }
+  }
+
+  function resetBookingWidget(){
+    document.getElementById('bkSuccessStep').style.display = 'none';
+    document.getElementById('bkName').value = '';
+    document.getElementById('bkPhone').value = '';
+    bkSelectedTime = null;
+    if(bkSelectedDate) loadBookingSlots(bkSelectedDate);
+  }
+
+  function showBkError(msg){
+    const el = document.getElementById('bkError');
+    el.textContent = msg;
+    el.style.display = 'block';
+  }
+  function hideBkError(){
+    document.getElementById('bkError').style.display = 'none';
   }
 
   // ✏️ רישום Service Worker - נדרש כדי שהדפדפן יאפשר "התקנה" של הדף כאפליקציה
