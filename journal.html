@@ -266,16 +266,7 @@
 </head>
 <body>
 
-<div id="loginScreen" class="card" style="max-width:340px; margin:15vh auto 0; text-align:center;">
-  <div class="logo" style="margin-bottom:6px;">Miriam<br>Omesi</div>
-  <div class="subtitle" style="margin-bottom:18px;">כניסה לניהול הקליניקה</div>
-  <div class="field-label">סיסמה</div>
-  <input type="password" id="passwordInput" placeholder="הזיני סיסמה">
-  <button class="add-btn" onclick="login()">כניסה</button>
-  <div id="loginStatus" class="form-error" style="display:none;"></div>
-</div>
-
-<div id="appScreen" style="display:none;">
+<div id="appScreen">
 
 <div class="header">
   <div class="logo">Miriam<br>Omesi</div>
@@ -486,7 +477,7 @@
   const HEBREW_MONTHS = ['ינואר','פברואר','מרץ','אפריל','מאי','יוני','יולי','אוגוסט','ספטמבר','אוקטובר','נובמבר','דצמבר'];
 
   // ✏️ סקריפט מאוחד אחד - תורים + יומן הכנסות + ניהול, הכל באותה כתובת Web App
-  const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyxAAOeRv0GC5bbKco6LU6eUVID_StIp7TvJ5PACcrgffTpLB7dZSIjl3emVwYEVlOg0g/exec';
+  const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby_ZHv7UhWbo7dGVpcydgROt_XtivN_ZDfMMCUnxH9IVvJY3jNhheznrPwYRd3Ll9gazg/exec';
 
   if(typeof ChartDataLabels !== 'undefined') Chart.register(ChartDataLabels);
 
@@ -499,35 +490,22 @@
     return (str || '').replace(/[‎‏‪-‮⁦-⁩]/g, '').trim().toLowerCase();
   }
 
-  async function login(){
-    const pwd = document.getElementById('passwordInput').value;
-    const statusEl = document.getElementById('loginStatus');
-    statusEl.style.display = 'none';
-
+  // ✏️ בוטלה דרישת הסיסמה במסך הכניסה - האפליקציה נטענת ישר, בלי מסך כניסה
+  async function init(){
     try{
-      const res = await fetch(`${APPS_SCRIPT_URL}?action=getEntries&password=${encodeURIComponent(pwd)}`);
+      const res = await fetch(`${APPS_SCRIPT_URL}?action=getEntries&password=`);
       const data = await res.json();
-
-      if(!data.success){
-        statusEl.textContent = data.error || 'סיסמה שגויה';
-        statusEl.style.display = 'block';
-        return;
+      if(data.success){
+        entries = (data.entries || []).map(e => ({ ...e, date: String(e.date).replace(/^'/, '') }));
       }
+    }catch(err){ /* אם הטעינה הראשונית נכשלת, ה-render עדיין ירוץ עם מערך ריק */ }
 
-      adminPassword = pwd;
-      entries = (data.entries || []).map(e => ({ ...e, date: String(e.date).replace(/^'/, '') }));
-      document.getElementById('loginScreen').style.display = 'none';
-      document.getElementById('appScreen').style.display = 'block';
-      render();
-      loadCalendarMonthBookings();
-      loadTreatments();
-      loadPriceListAdmin();
-
-    }catch(err){
-      statusEl.textContent = 'אירעה שגיאה, נסי שוב';
-      statusEl.style.display = 'block';
-    }
+    render();
+    loadCalendarMonthBookings();
+    loadTreatments();
+    loadPriceListAdmin();
   }
+  init();
 
   async function refreshEntries(){
     try{
