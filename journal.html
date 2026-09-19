@@ -1,10 +1,10 @@
-<!-- עודכן לאחרונה: 10.8.2026, תוויות v6 -->
+<!-- אפליקציה מאוחדת: יומן ניהול + פאנל ניהול (טיפולים/מחירון/פתיחת שעות/ביטול תורים) -->
 <!DOCTYPE html>
 <html lang="he" dir="rtl">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>יומן ניהול | Miriam Omesi</title>
+<title>ניהול קליניקה | Miriam Omesi</title>
 
 <!-- ✏️ PWA - מאפשר "התקנה" של הדף כאפליקציה מהדפדפן -->
 <link rel="manifest" href="journal-manifest.json">
@@ -54,31 +54,23 @@
   .divider{ width:60px; height:2px; background:var(--gold); margin:10px auto; opacity:0.7; }
   .subtitle{ font-size:13px; font-weight:700; color:var(--text-soft); letter-spacing:1px; }
 
-  .tabs{ display:flex; justify-content:center; gap:10px; margin-bottom:18px; }
-  .tab-btn{
-    font-family:'Rubik', sans-serif;
-    font-weight:700;
-    font-size:14px;
-    padding:9px 22px;
-    border-radius:30px;
-    border:1.5px solid var(--gold);
-    background:transparent;
-    color:var(--gold-deep);
-    cursor:pointer;
-    transition: all .2s ease;
+  h2{
+    font-family:'Playfair Display', serif;
+    font-weight: 700;
+    font-size: 20px;
+    margin-bottom: 18px;
+    color: var(--text-dark);
   }
-  .tab-btn.active{ background:var(--gold); color:#000; }
 
-  /* ✏️ תפריט תחתון קבוע - מחליף את שורת הטאבים שהייתה למעלה (יומן/סטטיסטיקות),
-     ומוסיף אליה גם "קביעת תורים" - בהשראת התפריט התחתון של פאנל הבלאק פון */
+  /* תפריט תחתון קבוע - 5 טאבים: יומן / סטטיסטיקות / קביעת תורים / טיפולים / מחירון */
   .bottom-nav{
     position:fixed; bottom:0; left:0; right:0; z-index:1500;
-    display:flex; gap:6px;
+    display:flex; gap:4px;
     background:rgba(251,246,234,0.97);
     backdrop-filter:blur(10px);
     -webkit-backdrop-filter:blur(10px);
     border-top:1px solid rgba(184,147,79,0.28);
-    padding:8px 14px calc(8px + env(safe-area-inset-bottom, 0px)) 14px;
+    padding:8px 8px calc(8px + env(safe-area-inset-bottom, 0px)) 8px;
     box-shadow:0 -8px 24px rgba(154,116,20,0.12);
   }
   .nav-btn{
@@ -88,13 +80,10 @@
     color:var(--text-soft);
     font-family:'Rubik', sans-serif; font-weight:700;
   }
-  .nav-btn span{ font-size:10.5px; }
-  .nav-icon{ width:20px; height:20px; }
+  .nav-btn span{ font-size:9.5px; }
+  .nav-icon{ width:19px; height:19px; }
   .nav-btn.active{ color:var(--gold-deep); background:rgba(184,147,79,0.14); }
 
-  /* ✏️ ווידג'ט "קביעת תורים" - נשען על אותו Apps Script של אתר הלקוחות
-     (getTreatments / getMonthAvailability / getSlots / bookAppointment), כדי
-     שהזמינות תמיד תואמת למה שכבר נקבע שם ולא ייווצרו התנגשויות */
   select.booking-date-input{
     width:100%; padding:11px 14px; border-radius:12px; border:1.5px solid rgba(184,147,79,0.4);
     background:rgba(255,255,255,0.7); color:var(--text-dark); font-family:'Assistant', sans-serif;
@@ -154,6 +143,7 @@
   .cal-cell.empty{ visibility:hidden; cursor:default; }
   .cal-cell.today{ border-color:var(--gold); box-shadow:0 0 0 1px var(--gold) inset; }
   .cal-cell.filled{ background: rgba(184,147,79,0.14); }
+  .cal-cell.has-bookings{ box-shadow: 0 0 0 1px var(--gold-deep) inset; }
   .day-num{ font-family:'Playfair Display', serif; font-weight:800; font-size:13px; }
   .day-badge{ font-size:8.5px; font-weight:700; color:var(--gold-deep); text-align:center; line-height:1.3; }
   .day-badge-count{ font-size:7px; color:var(--text-soft); font-weight:600; }
@@ -178,17 +168,18 @@
   }
   .modal-overlay.show{ display:flex; }
   .modal-card{
-    position:relative; max-width:440px; width:100%; background:rgba(251,246,234,0.98);
+    position:relative; max-width:460px; width:100%; background:rgba(251,246,234,0.98);
     border:1px solid rgba(184,147,79,0.35); border-radius:22px; padding:30px 22px 24px;
     box-shadow:0 20px 60px rgba(0,0,0,0.35);
   }
   .modal-close{ position:absolute; top:14px; left:14px; background:none; border:none; font-size:18px; color:var(--text-soft); cursor:pointer; }
   .modal-title{ font-family:'Playfair Display', serif; font-weight:700; font-size:18px; text-align:center; margin-bottom:10px; }
+  .modal-section{ margin-top:22px; }
   .modal-summary{
     background:rgba(184,147,79,0.1); border:1px solid rgba(184,147,79,0.25); border-radius:12px;
     padding:8px 12px; text-align:center; font-size:13px; font-weight:700; color:var(--gold-deep); margin-bottom:14px;
   }
-  .entry-list{ margin-bottom:18px; }
+  .entry-list{ margin-bottom:10px; }
   .empty-note{ color:var(--text-soft); font-size:13px; text-align:center; padding:8px 0; }
   .entry-row{
     display:flex; justify-content:space-between; align-items:center;
@@ -199,21 +190,68 @@
   .entry-meta{ font-size:12px; color:var(--text-soft); margin-top:2px; }
   .delete-btn{ background:none; border:none; color:#7A2E14; font-size:12px; font-weight:700; cursor:pointer; }
 
+  .field-label{ font-family:'Playfair Display', serif; font-weight:700; font-size:14px; margin-bottom:8px; }
   .form-label{ font-family:'Playfair Display', serif; font-weight:700; font-size:14px; margin-bottom:8px; }
-  input{
+  input, select{
     width:100%; padding:11px 14px; border-radius:12px; border:1.5px solid rgba(184,147,79,0.4);
     background:rgba(255,255,255,0.7); color:var(--text-dark); font-family:'Assistant', sans-serif;
     font-weight:600; font-size:14px; outline:none; margin-bottom:10px;
   }
-  input:focus{ border-color:var(--gold); }
+  input:focus, select:focus{ border-color:var(--gold); }
   .form-error{ color:#7A2E14; font-size:12px; font-weight:700; margin-bottom:8px; text-align:center; }
-  .add-btn{
+  .add-btn, .btn{
     width:100%; background:var(--gold); color:#000; border:none; font-weight:700;
-    font-size:14px; padding:12px 20px; border-radius:30px; cursor:pointer;
+    font-size:14px; padding:12px 20px; border-radius:30px; cursor:pointer; display:block; text-align:center;
   }
-  .add-btn:hover{ background: var(--gold-light); }
+  .add-btn:hover, .btn:hover{ background: var(--gold-light); }
+  .btn-secondary{
+    background:transparent; border:1.5px solid var(--gold); color:var(--gold-deep);
+    margin-bottom:10px;
+  }
+  .btn-secondary:hover{ background:rgba(184,147,79,0.1); }
+  .btn-danger{
+    background:none; border:none; color:#7A2E14; width:auto; padding:6px 10px; font-size:13px;
+  }
+  .btn-danger:hover{ background:rgba(150,40,20,0.08); }
 
-  /* ✏️ באנר התקנה - מוצג רק אם הדפדפן תומך ומאפשר "התקנה כאפליקציה" */
+  .row-list{ display:flex; flex-direction:column; gap:10px; margin-bottom:20px; }
+  .row-item{
+    display:flex; align-items:center; justify-content:space-between;
+    background:rgba(184,147,79,0.08); border:1px solid rgba(184,147,79,0.25);
+    border-radius:14px; padding:10px 16px; font-size:14px; font-weight:700; color:var(--gold-deep);
+  }
+  .inline-fields{ display:flex; gap:10px; }
+  .inline-fields > *{ flex:1; }
+
+  .status-msg{ text-align:center; font-size:14px; font-weight:700; margin-top:12px; min-height:18px; }
+  .status-msg.ok{ color:#2E6B3E; }
+  .status-msg.err{ color:#7A2E14; }
+
+  .category-block{
+    background:rgba(184,147,79,0.06); border:1px solid rgba(184,147,79,0.22);
+    border-radius:16px; padding:16px; margin-bottom:16px;
+  }
+  .category-block-header{ display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
+  .category-block-title{ font-family:'Playfair Display', serif; font-weight:700; font-size:16px; color:var(--gold-deep); }
+  .category-item-row{
+    display:flex; align-items:center; justify-content:space-between;
+    background:rgba(255,255,255,0.55); border-radius:10px; padding:8px 12px; margin-bottom:6px;
+    font-size:14px; font-weight:600; color:var(--text-dark);
+  }
+  .category-add-item-row{ display:flex; gap:8px; margin-top:10px; }
+  .category-add-item-row input{ margin-bottom:0; }
+  .category-add-item-row input:first-child{ flex:2; }
+  .category-add-item-row input:last-child{ flex:1; }
+
+  .booking-row{
+    background:rgba(184,147,79,0.08); border:1px solid rgba(184,147,79,0.25);
+    border-radius:14px; padding:10px 14px; margin-bottom:8px;
+  }
+  .booking-time{ font-family:'Playfair Display', serif; font-weight:700; color:var(--gold-deep); font-size:14px; }
+  .booking-name{ font-weight:700; color:var(--text-dark); font-size:14px; margin-top:2px; }
+  .booking-meta{ font-size:12.5px; color:var(--text-soft); margin-top:2px; }
+
+  /* באנר התקנה */
   .install-banner{
     display:none; max-width:560px; margin:0 auto 18px; background:rgba(184,147,79,0.12);
     border:1px solid var(--gold); border-radius:14px; padding:12px 16px;
@@ -230,8 +268,8 @@
 
 <div id="loginScreen" class="card" style="max-width:340px; margin:15vh auto 0; text-align:center;">
   <div class="logo" style="margin-bottom:6px;">Miriam<br>Omesi</div>
-  <div class="subtitle" style="margin-bottom:18px;">כניסה ליומן הניהול</div>
-  <div class="field-label" style="font-family:'Playfair Display',serif; font-weight:700; font-size:14px; margin-bottom:8px;">סיסמה</div>
+  <div class="subtitle" style="margin-bottom:18px;">כניסה לניהול הקליניקה</div>
+  <div class="field-label">סיסמה</div>
   <input type="password" id="passwordInput" placeholder="הזיני סיסמה">
   <button class="add-btn" onclick="login()">כניסה</button>
   <div id="loginStatus" class="form-error" style="display:none;"></div>
@@ -242,11 +280,11 @@
 <div class="header">
   <div class="logo">Miriam<br>Omesi</div>
   <div class="divider"></div>
-  <div class="subtitle">יומן ניהול קליניקה</div>
+  <div class="subtitle">ניהול קליניקה</div>
 </div>
 
 <div id="installBanner" class="install-banner">
-  <span>אפשר להתקין את היומן כאפליקציה במסך הבית 📲</span>
+  <span>אפשר להתקין את הניהול כאפליקציה במסך הבית 📲</span>
   <button class="install-btn" id="installBtn">התקנה</button>
 </div>
 
@@ -262,12 +300,11 @@
       <span>א</span><span>ב</span><span>ג</span><span>ד</span><span>ה</span><span>ו</span><span>ש</span>
     </div>
     <div class="cal-grid" id="calGrid"></div>
+    <div id="calendarLoading" class="empty-note" style="display:none;">טוענת...</div>
   </div>
 </div>
 
 <div id="viewStats" style="display:none;">
-
-  <!-- ✏️ מבט שנתי - הכנסה בכל חודש לאורך השנה. משתמש באותה שנה שנבחרה למעלה בניווט החודשי -->
   <div class="card" style="margin-bottom:8px;">
     <div class="chart-title">הכנסה חודשית לאורך השנה (₪) - <span id="statsYearLabel"></span></div>
     <div class="chart-wrap"><canvas id="yearlyChart"></canvas></div>
@@ -297,8 +334,6 @@
   </div>
 </div>
 
-<!-- ✏️ קביעת תורים - מציג אותם טיפולים/זמינות/שעות פנויות של אתר הלקוחות (Apps Script
-     משותף), כדי שתור שנקבע כאן ייספר גם שם ולהפך, בלי התנגשויות -->
 <div id="viewBooking" style="display:none;">
   <div class="card" style="text-align:right;">
     <div class="form-label">בחירת טיפול</div>
@@ -342,31 +377,83 @@
   </div>
 </div>
 
-<!-- חלונית יום -->
+<!-- ניהול טיפולים -->
+<div id="viewTreatments" style="display:none;">
+  <div class="card">
+    <h2>טיפולים ומשך זמן</h2>
+    <div id="treatments-list" class="row-list"></div>
+    <div id="treatments-empty" class="empty-note" hidden>אין טיפולים מוגדרים</div>
+    <div class="field-label">הוספת טיפול</div>
+    <input type="text" id="new-treatment-name" placeholder="שם הטיפול (למשל: לק ג'ל)">
+    <input type="number" id="new-treatment-duration" placeholder="משך בדקות (למשל: 30)" min="5" step="5">
+    <button class="btn btn-secondary" onclick="addTreatment()">+ הוספת טיפול</button>
+    <button class="btn" onclick="saveTreatments()">שמירת שינויים</button>
+    <div id="treatments-status" class="status-msg"></div>
+  </div>
+</div>
+
+<!-- ניהול מחירון -->
+<div id="viewPricelist" style="display:none;">
+  <div class="card">
+    <h2>מחירון</h2>
+    <div id="pricelist-categories-container"></div>
+    <div id="pricelist-categories-empty" class="empty-note" hidden>אין קטגוריות עדיין</div>
+    <div class="field-label">הוספת קטגוריה חדשה</div>
+    <input type="text" id="new-category-name" placeholder="שם קטגוריה (למשל: לק ג'ל)">
+    <button class="btn btn-secondary" onclick="addCategory()">+ הוספת קטגוריה</button>
+    <button class="btn" onclick="savePriceListAdmin()">שמירת מחירון</button>
+    <div id="pricelist-status" class="status-msg"></div>
+  </div>
+</div>
+
+<!-- חלונית יום - מאוחדת: תורים שנקבעו + שעות פנויות + רשומות הכנסה -->
 <div id="dayModal" class="modal-overlay" onclick="if(event.target===this) closeDayModal()">
   <div class="modal-card">
     <button class="modal-close" onclick="closeDayModal()">✕</button>
     <div class="modal-title" id="modalTitle"></div>
-    <div id="modalSummary" class="modal-summary" style="display:none;"></div>
-    <div id="entryList" class="entry-list"></div>
 
-    <div class="form-label">הוספת לקוחה</div>
-    <input type="text" id="formName" placeholder="שם הלקוחה">
-    <input type="text" id="formTreatment" placeholder="סוג טיפול (למשל: לק ג'ל)" list="treatmentSuggestions">
-    <datalist id="treatmentSuggestions">
-      <option value="לק ג'ל"></option>
-      <option value="גבות"></option>
-      <option value="פדיקור רפואי"></option>
-      <option value="ריסים"></option>
-      <option value="טיפול פנים"></option>
-    </datalist>
-    <input type="number" id="formAmount" placeholder="סכום ששולם (₪)">
-    <div id="formError" class="form-error" style="display:none;"></div>
-    <button class="add-btn" onclick="addEntry()">+ הוספת רשומה</button>
+    <div class="modal-section" style="margin-top:0;">
+      <div class="field-label">תורים שנקבעו</div>
+      <div id="modal-bookings-list"></div>
+      <div id="modal-bookings-empty" class="empty-note" hidden>אין תורים ביום זה</div>
+    </div>
+
+    <div class="modal-section">
+      <div class="field-label">שעות פנויות</div>
+      <div id="windows-list" class="row-list"></div>
+      <div id="windows-empty" class="empty-note" hidden>אין שעות פתוחות בתאריך זה עדיין</div>
+      <div class="inline-fields">
+        <input type="time" id="window-start">
+        <input type="time" id="window-end">
+      </div>
+      <button class="btn btn-secondary" onclick="addWindow()">+ הוספת חלון</button>
+      <button class="btn" onclick="saveSchedule()">שמירת שעות</button>
+      <div id="schedule-status" class="status-msg"></div>
+    </div>
+
+    <div class="modal-section">
+      <div class="field-label">רשומות הכנסה</div>
+      <div id="modalSummary" class="modal-summary" style="display:none;"></div>
+      <div id="entryList" class="entry-list"></div>
+
+      <div class="field-label">הוספת לקוחה</div>
+      <input type="text" id="formName" placeholder="שם הלקוחה">
+      <input type="text" id="formTreatment" placeholder="סוג טיפול (למשל: לק ג'ל)" list="treatmentSuggestions">
+      <datalist id="treatmentSuggestions">
+        <option value="לק ג'ל"></option>
+        <option value="גבות"></option>
+        <option value="פדיקור רפואי"></option>
+        <option value="ריסים"></option>
+        <option value="טיפול פנים"></option>
+      </datalist>
+      <input type="number" id="formAmount" placeholder="סכום ששולם (₪)">
+      <div id="formError" class="form-error" style="display:none;"></div>
+      <button class="add-btn" onclick="addEntry()">+ הוספת רשומה</button>
+    </div>
   </div>
 </div>
 
-<!-- ✏️ תפריט תחתון - יומן / סטטיסטיקות / קביעת תורים, בהשראת התפריט התחתון של פאנל הבלאק פון -->
+<!-- תפריט תחתון - 5 טאבים -->
 <div class="bottom-nav">
   <button class="nav-btn active" id="tabCalendar" onclick="switchView('calendar')">
     <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
@@ -380,6 +467,14 @@
     <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="12" y1="14" x2="12" y2="18"/><line x1="10" y1="16" x2="14" y2="16"/></svg>
     <span>קביעת תורים</span>
   </button>
+  <button class="nav-btn" id="tabTreatments" onclick="switchView('treatments')">
+    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
+    <span>טיפולים</span>
+  </button>
+  <button class="nav-btn" id="tabPricelist" onclick="switchView('pricelist')">
+    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41 11 3.83A2 2 0 0 0 9.59 3.17H4a1 1 0 0 0-1 1v5.59a2 2 0 0 0 .59 1.41l9.59 9.59a2 2 0 0 0 2.82 0l4.59-4.59a2 2 0 0 0 0-2.82Z"/><circle cx="7.5" cy="7.5" r="1.2" fill="currentColor" stroke="none"/></svg>
+    <span>מחירון</span>
+  </button>
 </div>
 
 </div>
@@ -387,28 +482,19 @@
 
 <script>
   const COLORS = { gold:'#B8934F', goldLight:'#D9BD7E', goldDeep:'#4E3A10', creamSoft:'#EFE3C6', textSoft:'#6B5A30' };
-  // ✏️ פלטת גוונים למשפחת הזהב - כל סוג טיפול בגרף מקבל צבע אחר מתוך הרשימה הזו (חוזר על עצמו אם יש הרבה סוגים)
   const TREATMENT_PALETTE = ['#4E3A10', '#B8934F', '#8A6B2C', '#D9BD7E', '#6B5A30', '#A67C3D', '#7A5F1F', '#C9A868'];
   const HEBREW_MONTHS = ['ינואר','פברואר','מרץ','אפריל','מאי','יוני','יולי','אוגוסט','ספטמבר','אוקטובר','נובמבר','דצמבר'];
 
-  // ✏️ הדביקי כאן את כתובת ה-Web App שקיבלת מ-JournalCode.gs אחרי הפריסה
-  const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwWy14iKoAiAHig3lsJQfuZ3wqD0TdSW0ajMI0hACEUo_Zf-LyoFfl5fIEvOylWzMafiQ/exec';
+  // ✏️ סקריפט מאוחד אחד - תורים + יומן הכנסות + ניהול, הכל באותה כתובת Web App
+  const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyxAAOeRv0GC5bbKco6LU6eUVID_StIp7TvJ5PACcrgffTpLB7dZSIjl3emVwYEVlOg0g/exec';
 
-  // ✏️ אותו Apps Script בדיוק ששולט על "קביעת תורים" באתר הלקוחות (miriamomesi.co.il) -
-  // כדי שתור שנקבע כאן ייבדק ויירשם באותו מקום בדיוק, ולא ייווצרו התנגשויות בין תור
-  // שנקבע כאן לתור שלקוחה קובעת בעצמה באתר
-  const BOOKING_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyxAAOeRv0GC5bbKco6LU6eUVID_StIp7TvJ5PACcrgffTpLB7dZSIjl3emVwYEVlOg0g/exec';
-
-  // ✏️ רושמים את התוסף שמציג מספרים ישירות על העמודות בגרף (רק במקומות שנבקש זאת בפירוש)
   if(typeof ChartDataLabels !== 'undefined') Chart.register(ChartDataLabels);
 
-  let journalPassword = '';
+  let adminPassword = '';
 
   function pad2(n){ return n < 10 ? '0'+n : ''+n; }
   function dateKey(y,m,d){ return `${y}-${pad2(m)}-${pad2(d)}`; }
 
-  // ✏️ מנקה תווים בלתי-נראים (סימוני כיווניות שמקלדות מובייל בעברית לפעמים מוסיפות בלי
-  // שרואים) - בלעדי זה שתי הקלדות של אותו שם יכולות "להיראות" זהות אבל לא להיות שוות בהשוואה
   function normalizeName(str){
     return (str || '').replace(/[‎‏‪-‮⁦-⁩]/g, '').trim().toLowerCase();
   }
@@ -428,11 +514,14 @@
         return;
       }
 
-      journalPassword = pwd;
+      adminPassword = pwd;
       entries = (data.entries || []).map(e => ({ ...e, date: String(e.date).replace(/^'/, '') }));
       document.getElementById('loginScreen').style.display = 'none';
       document.getElementById('appScreen').style.display = 'block';
       render();
+      loadCalendarMonthBookings();
+      loadTreatments();
+      loadPriceListAdmin();
 
     }catch(err){
       statusEl.textContent = 'אירעה שגיאה, נסי שוב';
@@ -440,10 +529,9 @@
     }
   }
 
-  // ✏️ שולפת מחדש את כל הרשומות מהגיליון - קוראים לזה אחרי כל הוספה/מחיקה כדי להישאר מסונכרנים
   async function refreshEntries(){
     try{
-      const res = await fetch(`${APPS_SCRIPT_URL}?action=getEntries&password=${encodeURIComponent(journalPassword)}`);
+      const res = await fetch(`${APPS_SCRIPT_URL}?action=getEntries&password=${encodeURIComponent(adminPassword)}`);
       const data = await res.json();
       if(data.success) entries = (data.entries || []).map(e => ({ ...e, date: String(e.date).replace(/^'/, '') }));
     }catch(err){ /* אם זה נכשל, פשוט ממשיכים עם הנתונים הקיימים בזיכרון */ }
@@ -455,6 +543,8 @@
   let calMonth = today.getMonth() + 1;
   let selectedDate = null;
   let currentView = 'calendar';
+  let lastMonthBookingsData = {}; // { 'yyyy-mm-dd': { windows:[], bookings:[] } } - מהחודש המוצג כרגע
+  let currentWindows = [];
 
   let dailyChartInstance = null, pieChartInstance = null, treatmentChartInstance = null, yearlyChartInstance = null;
 
@@ -482,13 +572,16 @@
     document.getElementById('tabCalendar').classList.toggle('active', view === 'calendar');
     document.getElementById('tabStats').classList.toggle('active', view === 'stats');
     document.getElementById('tabBooking').classList.toggle('active', view === 'booking');
+    document.getElementById('tabTreatments').classList.toggle('active', view === 'treatments');
+    document.getElementById('tabPricelist').classList.toggle('active', view === 'pricelist');
     document.getElementById('viewCalendar').style.display = view === 'calendar' ? 'block' : 'none';
     document.getElementById('viewStats').style.display = view === 'stats' ? 'block' : 'none';
     document.getElementById('viewBooking').style.display = view === 'booking' ? 'block' : 'none';
-    // ✏️ ניווט החודשים למעלה שייך ליומן/סטטיסטיקות בלבד - בקביעת תורים יש לוח שנה נפרד משלה
-    document.getElementById('monthNav').style.display = view === 'booking' ? 'none' : 'flex';
+    document.getElementById('viewTreatments').style.display = view === 'treatments' ? 'block' : 'none';
+    document.getElementById('viewPricelist').style.display = view === 'pricelist' ? 'block' : 'none';
+    document.getElementById('monthNav').style.display = (view === 'calendar' || view === 'stats') ? 'flex' : 'none';
     if(view === 'booking') initBooking();
-    else render();
+    else if(view === 'calendar' || view === 'stats') render();
   }
 
   function changeMonth(delta){
@@ -496,12 +589,30 @@
     if(calMonth < 1){ calMonth = 12; calYear--; }
     if(calMonth > 12){ calMonth = 1; calYear++; }
     render();
+    loadCalendarMonthBookings();
   }
 
   function render(){
     document.getElementById('monthLabel').textContent = `${HEBREW_MONTHS[calMonth-1]} ${calYear}`;
     if(currentView === 'calendar') renderCalendar();
     else renderStats();
+  }
+
+  // ✏️ שולפת תורים בפועל (מהיומן של גוגל) + שעות פתוחות לחודש המוצג, כדי שאפשר יהיה
+  // לראות ולנהל אותם בחלונית היום לצד רשומות ההכנסה
+  async function loadCalendarMonthBookings(){
+    const loadingEl = document.getElementById('calendarLoading');
+    loadingEl.style.display = 'block';
+    try{
+      const res = await fetch(`${APPS_SCRIPT_URL}?action=adminGetMonth&year=${calYear}&month=${calMonth}&password=${encodeURIComponent(adminPassword)}`);
+      const data = await res.json();
+      loadingEl.style.display = 'none';
+      if(!data.success) return;
+      lastMonthBookingsData = data.days || {};
+      if(currentView === 'calendar') renderCalendar();
+    }catch(err){
+      loadingEl.style.display = 'none';
+    }
   }
 
   function renderCalendar(){
@@ -521,9 +632,10 @@
       const key = dateKey(calYear, calMonth, d);
       const dayEntries = byDate[key] || [];
       const dayTotal = dayEntries.reduce((s,e) => s + (Number(e.amount)||0), 0);
+      const hasBookings = (lastMonthBookingsData[key] && lastMonthBookingsData[key].bookings || []).length > 0;
 
       const cell = document.createElement('div');
-      cell.className = 'cal-cell' + (key===todayKey ? ' today' : '') + (dayEntries.length ? ' filled' : '');
+      cell.className = 'cal-cell' + (key===todayKey ? ' today' : '') + (dayEntries.length ? ' filled' : '') + (hasBookings ? ' has-bookings' : '');
       cell.onclick = () => openDayModal(key);
 
       const num = document.createElement('div');
@@ -552,8 +664,8 @@
       const key = normalizeName(e.name);
       if(key) uniqueClients[key] = true;
       const first = firstEntries[key];
-      if(first && first.id === e.id) newCount++; // זו הפעם הראשונה אי-פעם של הלקוחה הזו
-      else returningCount++; // כבר הייתה לפני (גם אם קודם באותו חודש)
+      if(first && first.id === e.id) newCount++;
+      else returningCount++;
     });
     const revenue = monthEntries.reduce((s,e) => s + (Number(e.amount)||0), 0);
 
@@ -568,7 +680,6 @@
     document.getElementById('statReturning').textContent = returningCount;
     document.getElementById('statRevenue').textContent = '₪' + revenue.toLocaleString();
 
-    // ✏️ גרף שנתי - הכנסה בכל אחד מ-12 החודשים של השנה הנבחרת, מול העיניים בבת אחת
     document.getElementById('statsYearLabel').textContent = calYear;
     const yearlyLabels = HEBREW_MONTHS.map(m => m.slice(0,3));
     const yearlyData = [];
@@ -585,17 +696,13 @@
       data: { labels: yearlyLabels, datasets: [{ label:'הכנסה', data: yearlyData, backgroundColor: COLORS.goldDeep, borderRadius: 6, maxBarThickness: 34 }] },
       options: {
         responsive:true, maintainAspectRatio:false,
-        layout:{ padding:{ top:26 } }, /* ✏️ מקום פנוי למעלה כדי שהסכום לא ייחתך */
+        layout:{ padding:{ top:26 } },
         plugins:{
           legend:{ display:false },
           tooltip:{ callbacks:{ label: (ctx) => '₪' + ctx.parsed.y.toLocaleString() } },
           datalabels:{
-            anchor:'end',
-            align:'top',
-            offset:2,
-            textAlign:'center',
-            color: COLORS.goldDeep,
-            font:{ family:'Assistant', weight:700, size:11 },
+            anchor:'end', align:'top', offset:2, textAlign:'center',
+            color: COLORS.goldDeep, font:{ family:'Assistant', weight:700, size:11 },
             formatter: (value) => value > 0 ? value.toLocaleString() : ''
           }
         },
@@ -606,7 +713,6 @@
       }
     });
 
-    // גרף הכנסה יומית
     const daysInMonth = new Date(calYear, calMonth, 0).getDate();
     const byDate = entriesByDate();
     const dailyLabels = [], dailyData = [];
@@ -622,16 +728,12 @@
       data: { labels: dailyLabels, datasets: [{ label:'הכנסה', data: dailyData, backgroundColor: COLORS.gold, borderRadius: 6, maxBarThickness: 22 }] },
       options: {
         responsive:true, maintainAspectRatio:false,
-        layout:{ padding:{ top:26 } }, /* ✏️ מקום פנוי למעלה כדי שהסכום לא ייחתך */
+        layout:{ padding:{ top:26 } },
         plugins:{
           legend:{ display:false },
           datalabels:{
-            anchor:'end',
-            align:'top',
-            offset:2,
-            textAlign:'center',
-            color: COLORS.goldDeep,
-            font:{ family:'Assistant', weight:700, size:10 },
+            anchor:'end', align:'top', offset:2, textAlign:'center',
+            color: COLORS.goldDeep, font:{ family:'Assistant', weight:700, size:10 },
             formatter: (value) => value > 0 ? value.toLocaleString() : ''
           }
         },
@@ -642,7 +744,6 @@
       }
     });
 
-    // גרף חדשות מול חוזרות
     if(pieChartInstance) pieChartInstance.destroy();
     pieChartInstance = new Chart(document.getElementById('pieChart'), {
       type: 'doughnut',
@@ -656,7 +757,6 @@
       }
     });
 
-    // גרף הכנסה לפי טיפול
     const treatmentMap = {};
     monthEntries.forEach(e => {
       const t = (e.treatment || '').trim() || 'ללא ציון';
@@ -675,22 +775,17 @@
           data: treatmentData,
           backgroundColor: treatmentLabels.map((_, i) => TREATMENT_PALETTE[i % TREATMENT_PALETTE.length]),
           borderRadius: 6,
-          maxBarThickness: 34 /* ✏️ מגביל את עובי כל עמודה, כדי שהגרף לא ייראה "רחב מדי" */
+          maxBarThickness: 34
         }]
       },
       options: {
         responsive:true, maintainAspectRatio:false,
-        layout:{ padding:{ top:26 } }, /* ✏️ מקום פנוי למעלה, כדי שהסכום מעל העמודה לא ייחתך */
+        layout:{ padding:{ top:26 } },
         plugins:{
           legend:{ display:false },
           datalabels:{
-            anchor:'end',
-            align:'top',
-            offset:2,
-            textAlign:'center',
-            color: COLORS.goldDeep,
-            font:{ family:'Assistant', weight:700, size:12 },
-            /* ✏️ בלי סימן ₪ בתוך התווית - שילוב שלו עם מספרים על ה-canvas גרם לתצוגה מקוטעת/הפוכה */
+            anchor:'end', align:'top', offset:2, textAlign:'center',
+            color: COLORS.goldDeep, font:{ family:'Assistant', weight:700, size:12 },
             formatter: (value) => value.toLocaleString()
           }
         },
@@ -702,15 +797,48 @@
     });
   }
 
+  // ---------------- חלונית יום מאוחדת: תורים + שעות פנויות + הכנסות ----------------
+
   function openDayModal(key){
     selectedDate = key;
     document.getElementById('formName').value = '';
     document.getElementById('formTreatment').value = '';
     document.getElementById('formAmount').value = '';
     document.getElementById('formError').style.display = 'none';
+    document.getElementById('window-start').value = '';
+    document.getElementById('window-end').value = '';
+    setScheduleStatus('');
 
     const dateObj = new Date(key + 'T12:00:00');
     document.getElementById('modalTitle').textContent = dateObj.toLocaleDateString('he-IL', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+
+    const dayData = lastMonthBookingsData[key] || { windows: [], bookings: [] };
+
+    // תורים שנקבעו
+    const bookingsList = document.getElementById('modal-bookings-list');
+    const bookingsEmpty = document.getElementById('modal-bookings-empty');
+    bookingsList.innerHTML = '';
+    bookingsEmpty.hidden = dayData.bookings.length > 0;
+    dayData.bookings.forEach(b => {
+      const row = document.createElement('div');
+      row.className = 'booking-row';
+      row.innerHTML = `
+        <div class="booking-time">${b.time} - ${b.endTime}</div>
+        <div class="booking-name">${escapeHtml(b.name)}${b.treatment ? ' · ' + escapeHtml(b.treatment) : ''}</div>
+        ${b.phone ? `<div class="booking-meta">${escapeHtml(b.phone)}</div>` : ''}
+      `;
+      const cancelBtn = document.createElement('button');
+      cancelBtn.className = 'btn btn-danger';
+      cancelBtn.textContent = 'ביטול תור';
+      cancelBtn.style.marginTop = '8px';
+      cancelBtn.onclick = () => cancelBooking(key, b.id, b.name);
+      row.appendChild(cancelBtn);
+      bookingsList.appendChild(row);
+    });
+
+    // שעות פנויות
+    currentWindows = (dayData.windows || []).slice();
+    renderWindows();
 
     renderDayEntries();
     document.getElementById('dayModal').classList.add('show');
@@ -719,6 +847,109 @@
   function closeDayModal(){
     document.getElementById('dayModal').classList.remove('show');
     render();
+  }
+
+  async function cancelBooking(dateKey, eventId, clientName){
+    if(!confirm(`לבטל את התור של ${clientName}?`)) return;
+
+    try{
+      const res = await fetch(APPS_SCRIPT_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({
+          action: 'adminCancelBooking',
+          password: adminPassword,
+          date: dateKey,
+          eventId: eventId
+        })
+      });
+      const data = await res.json();
+      if(!data.success){
+        alert(data.error || 'שגיאה בביטול התור');
+        return;
+      }
+
+      if(lastMonthBookingsData[dateKey]){
+        lastMonthBookingsData[dateKey].bookings = lastMonthBookingsData[dateKey].bookings.filter(b => b.id !== eventId);
+      }
+      // ✏️ ביטול תור מוחק אוטומטית גם את רשומת ההכנסה המתאימה בשרת - מרעננים כדי שגם היומן יתעדכן
+      await refreshEntries();
+      renderCalendar();
+      openDayModal(dateKey);
+
+    }catch(err){
+      alert('שגיאה בביטול התור, נסי שוב');
+    }
+  }
+
+  function renderWindows(){
+    const windowsList = document.getElementById('windows-list');
+    const windowsEmpty = document.getElementById('windows-empty');
+    windowsList.innerHTML = '';
+    windowsEmpty.hidden = currentWindows.length > 0;
+
+    currentWindows.forEach((w, i) => {
+      const row = document.createElement('div');
+      row.className = 'row-item';
+      row.innerHTML = `<span>${w.start} - ${w.end}</span>`;
+      const delBtn = document.createElement('button');
+      delBtn.className = 'btn btn-danger';
+      delBtn.textContent = 'מחיקה';
+      delBtn.onclick = () => { currentWindows.splice(i, 1); renderWindows(); };
+      row.appendChild(delBtn);
+      windowsList.appendChild(row);
+    });
+  }
+
+  function addWindow(){
+    const start = document.getElementById('window-start').value;
+    const end = document.getElementById('window-end').value;
+    if(!start || !end){
+      setScheduleStatus('נא למלא שעת התחלה וסיום', true);
+      return;
+    }
+    if(start >= end){
+      setScheduleStatus('שעת הסיום חייבת להיות אחרי שעת ההתחלה', true);
+      return;
+    }
+    currentWindows.push({ start, end });
+    currentWindows.sort((a, b) => a.start.localeCompare(b.start));
+    renderWindows();
+    document.getElementById('window-start').value = '';
+    document.getElementById('window-end').value = '';
+  }
+
+  async function saveSchedule(){
+    if(!selectedDate) return;
+    setScheduleStatus('שומרת...');
+    try{
+      const res = await fetch(APPS_SCRIPT_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({
+          action: 'adminSetSchedule',
+          password: adminPassword,
+          date: selectedDate,
+          windows: currentWindows
+        })
+      });
+      const data = await res.json();
+      if(!data.success){
+        setScheduleStatus(data.error || 'שגיאה בשמירה', true);
+        return;
+      }
+      setScheduleStatus('נשמר בהצלחה ✓');
+      if(!lastMonthBookingsData[selectedDate]) lastMonthBookingsData[selectedDate] = { windows: [], bookings: [] };
+      lastMonthBookingsData[selectedDate].windows = currentWindows.slice();
+    }catch(err){
+      setScheduleStatus('שגיאה בשמירה', true);
+    }
+  }
+
+  function setScheduleStatus(msg, isError){
+    const el = document.getElementById('schedule-status');
+    el.textContent = msg;
+    el.className = 'status-msg ' + (isError ? 'err' : 'ok');
   }
 
   function renderDayEntries(){
@@ -777,7 +1008,7 @@
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
         body: JSON.stringify({
           action: 'addEntry',
-          password: journalPassword,
+          password: adminPassword,
           date: selectedDate, name, treatment, amount
         })
       });
@@ -805,7 +1036,7 @@
       const res = await fetch(APPS_SCRIPT_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify({ action: 'deleteEntry', password: journalPassword, id })
+        body: JSON.stringify({ action: 'deleteEntry', password: adminPassword, id })
       });
       const data = await res.json();
       if(!data.success) return;
@@ -823,10 +1054,7 @@
   }
 
   /* =========================================================
-     ✏️ קביעת תורים - קוראת לאותו Apps Script של אתר הלקוחות
-     (getTreatments / getMonthAvailability / getSlots / bookAppointment),
-     כדי שהזמינות והשעות התפוסות תמיד יהיו מסונכרנות עם מה שלקוחות כבר
-     קבעו בעצמן באתר, ולא תיווצר התנגשות בין תור שנקבע כאן לתור שנקבע שם
+     קביעת תורים (על ידי הצוות) - אותו Apps Script המאוחד
   ========================================================= */
   let bkTreatmentsLoaded = false;
   let bkTreatment = null, bkSelectedDate = null, bkSelectedTime = null;
@@ -846,7 +1074,7 @@
   async function loadBookingTreatments(){
     const sel = document.getElementById('bkTreatment');
     try{
-      const res = await fetch(`${BOOKING_APPS_SCRIPT_URL}?action=getTreatments`);
+      const res = await fetch(`${APPS_SCRIPT_URL}?action=getTreatments`);
       const data = await res.json();
       sel.innerHTML = '<option value="">בחרי טיפול...</option>';
       if(!data.success || !data.treatments || !data.treatments.length){
@@ -896,7 +1124,7 @@
     loadingEl.style.display = 'block';
     gridEl.innerHTML = '';
     try{
-      const url = `${BOOKING_APPS_SCRIPT_URL}?action=getMonthAvailability&year=${bkCalYear}&month=${bkCalMonth}&treatment=${encodeURIComponent(bkTreatment)}`;
+      const url = `${APPS_SCRIPT_URL}?action=getMonthAvailability&year=${bkCalYear}&month=${bkCalMonth}&treatment=${encodeURIComponent(bkTreatment)}`;
       const res = await fetch(url);
       const data = await res.json();
       loadingEl.style.display = 'none';
@@ -960,7 +1188,7 @@
     emptyEl.style.display = 'none';
     loadingEl.style.display = 'block';
     try{
-      const url = `${BOOKING_APPS_SCRIPT_URL}?action=getSlots&date=${encodeURIComponent(dateStr)}&treatment=${encodeURIComponent(bkTreatment)}`;
+      const url = `${APPS_SCRIPT_URL}?action=getSlots&date=${encodeURIComponent(dateStr)}&treatment=${encodeURIComponent(bkTreatment)}`;
       const res = await fetch(url);
       const data = await res.json();
       loadingEl.style.display = 'none';
@@ -997,8 +1225,6 @@
     document.getElementById('bkSuccessStep').style.display = 'none';
   }
 
-  // ✏️ שולחת את הבקשה לאותו bookAppointment שאתר הלקוחות משתמש בו - אם השעה נתפסה
-  // בינתיים ע"י לקוחה אחרת, השרת ידחה את הבקשה והשעות הפנויות יתרעננו אוטומטית
   async function submitStaffBooking(){
     hideBkError();
     const name = document.getElementById('bkName').value.trim();
@@ -1012,7 +1238,7 @@
       return;
     }
     try{
-      const res = await fetch(BOOKING_APPS_SCRIPT_URL, {
+      const res = await fetch(APPS_SCRIPT_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
         body: JSON.stringify({
@@ -1031,6 +1257,9 @@
       }
       document.getElementById('bkFormStep').style.display = 'none';
       document.getElementById('bkSuccessStep').style.display = 'block';
+      // ✏️ תור חדש שנקבע כאן נכנס אוטומטית גם ליומן ההכנסות - מרעננים ברקע
+      refreshEntries();
+      loadCalendarMonthBookings();
     }catch(err){
       showBkError('אירעה שגיאה בשמירה, נסי שוב');
     }
@@ -1053,14 +1282,208 @@
     document.getElementById('bkError').style.display = 'none';
   }
 
-  // ✏️ רישום Service Worker - נדרש כדי שהדפדפן יאפשר "התקנה" של הדף כאפליקציה
+  /* ---------------- טיפולים ---------------- */
+  let currentTreatments = [];
+
+  async function loadTreatments(){
+    try{
+      const res = await fetch(`${APPS_SCRIPT_URL}?action=getTreatments`);
+      const data = await res.json();
+      currentTreatments = (data.success && data.treatments) ? data.treatments : [];
+      renderTreatments();
+    }catch(err){
+      setTreatmentsStatus('שגיאה בטעינת הטיפולים', true);
+    }
+  }
+
+  function renderTreatments(){
+    const treatmentsList = document.getElementById('treatments-list');
+    const treatmentsEmpty = document.getElementById('treatments-empty');
+    treatmentsList.innerHTML = '';
+    treatmentsEmpty.hidden = currentTreatments.length > 0;
+
+    currentTreatments.forEach((t, i) => {
+      const row = document.createElement('div');
+      row.className = 'row-item';
+      row.innerHTML = `<span>${escapeHtml(t.name)} — ${t.duration} דק'</span>`;
+      const delBtn = document.createElement('button');
+      delBtn.className = 'btn btn-danger';
+      delBtn.textContent = 'מחיקה';
+      delBtn.onclick = () => { currentTreatments.splice(i, 1); renderTreatments(); };
+      row.appendChild(delBtn);
+      treatmentsList.appendChild(row);
+    });
+  }
+
+  function addTreatment(){
+    const name = document.getElementById('new-treatment-name').value.trim();
+    const duration = parseInt(document.getElementById('new-treatment-duration').value, 10);
+    if(!name || !duration || duration <= 0){
+      setTreatmentsStatus('נא למלא שם ומשך זמן תקינים', true);
+      return;
+    }
+    currentTreatments.push({ name, duration });
+    renderTreatments();
+    document.getElementById('new-treatment-name').value = '';
+    document.getElementById('new-treatment-duration').value = '';
+  }
+
+  async function saveTreatments(){
+    setTreatmentsStatus('שומרת...');
+    try{
+      const res = await fetch(APPS_SCRIPT_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({
+          action: 'adminSaveTreatments',
+          password: adminPassword,
+          treatments: currentTreatments
+        })
+      });
+      const data = await res.json();
+      if(!data.success){
+        setTreatmentsStatus(data.error || 'שגיאה בשמירה', true);
+        return;
+      }
+      setTreatmentsStatus('נשמר בהצלחה ✓');
+    }catch(err){
+      setTreatmentsStatus('שגיאה בשמירה', true);
+    }
+  }
+
+  function setTreatmentsStatus(msg, isError){
+    const el = document.getElementById('treatments-status');
+    el.textContent = msg;
+    el.className = 'status-msg ' + (isError ? 'err' : 'ok');
+  }
+
+  /* ---------------- מחירון ---------------- */
+  let currentPriceList = [];
+
+  async function loadPriceListAdmin(){
+    try{
+      const res = await fetch(`${APPS_SCRIPT_URL}?action=getPriceList`);
+      const data = await res.json();
+      currentPriceList = (data.success && data.categories) ? data.categories : [];
+      renderPriceListAdmin();
+    }catch(err){
+      setPriceListStatus('שגיאה בטעינת המחירון', true);
+    }
+  }
+
+  function renderPriceListAdmin(){
+    const container = document.getElementById('pricelist-categories-container');
+    const emptyEl = document.getElementById('pricelist-categories-empty');
+    container.innerHTML = '';
+    emptyEl.hidden = currentPriceList.length > 0;
+
+    currentPriceList.forEach((cat, catIndex) => {
+      const block = document.createElement('div');
+      block.className = 'category-block';
+
+      const header = document.createElement('div');
+      header.className = 'category-block-header';
+      header.innerHTML = `<span class="category-block-title">${escapeHtml(cat.category)}</span>`;
+      const delCatBtn = document.createElement('button');
+      delCatBtn.className = 'btn btn-danger';
+      delCatBtn.textContent = 'מחיקת קטגוריה';
+      delCatBtn.onclick = () => { currentPriceList.splice(catIndex, 1); renderPriceListAdmin(); };
+      header.appendChild(delCatBtn);
+      block.appendChild(header);
+
+      (cat.items || []).forEach((item, itemIndex) => {
+        const row = document.createElement('div');
+        row.className = 'category-item-row';
+        row.innerHTML = `<span>${escapeHtml(item.name)} — ₪${escapeHtml(String(item.price))}</span>`;
+        const delItemBtn = document.createElement('button');
+        delItemBtn.className = 'btn btn-danger';
+        delItemBtn.textContent = 'מחיקה';
+        delItemBtn.onclick = () => { cat.items.splice(itemIndex, 1); renderPriceListAdmin(); };
+        row.appendChild(delItemBtn);
+        block.appendChild(row);
+      });
+
+      const addRow = document.createElement('div');
+      addRow.className = 'category-add-item-row';
+      const nameInput = document.createElement('input');
+      nameInput.type = 'text';
+      nameInput.placeholder = 'שם המוצר';
+      const priceInput = document.createElement('input');
+      priceInput.type = 'number';
+      priceInput.placeholder = 'מחיר ₪';
+      addRow.appendChild(nameInput);
+      addRow.appendChild(priceInput);
+      block.appendChild(addRow);
+
+      const addBtn = document.createElement('button');
+      addBtn.className = 'btn btn-secondary';
+      addBtn.style.marginTop = '8px';
+      addBtn.textContent = '+ הוספת מוצר';
+      addBtn.onclick = () => {
+        const name = nameInput.value.trim();
+        const price = parseFloat(priceInput.value);
+        if(!name || isNaN(price) || price < 0){
+          setPriceListStatus('נא למלא שם ומחיר תקינים', true);
+          return;
+        }
+        if(!cat.items) cat.items = [];
+        cat.items.push({ name, price });
+        renderPriceListAdmin();
+      };
+      block.appendChild(addBtn);
+
+      container.appendChild(block);
+    });
+  }
+
+  function addCategory(){
+    const nameInput = document.getElementById('new-category-name');
+    const name = nameInput.value.trim();
+    if(!name){
+      setPriceListStatus('נא למלא שם קטגוריה', true);
+      return;
+    }
+    currentPriceList.push({ category: name, items: [] });
+    renderPriceListAdmin();
+    nameInput.value = '';
+  }
+
+  async function savePriceListAdmin(){
+    setPriceListStatus('שומרת...');
+    try{
+      const res = await fetch(APPS_SCRIPT_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({
+          action: 'adminSavePriceList',
+          password: adminPassword,
+          categories: currentPriceList
+        })
+      });
+      const data = await res.json();
+      if(!data.success){
+        setPriceListStatus(data.error || 'שגיאה בשמירה', true);
+        return;
+      }
+      setPriceListStatus('נשמר בהצלחה ✓');
+    }catch(err){
+      setPriceListStatus('שגיאה בשמירה', true);
+    }
+  }
+
+  function setPriceListStatus(msg, isError){
+    const el = document.getElementById('pricelist-status');
+    el.textContent = msg;
+    el.className = 'status-msg ' + (isError ? 'err' : 'ok');
+  }
+
+  // רישום Service Worker
   if('serviceWorker' in navigator){
     window.addEventListener('load', () => {
       navigator.serviceWorker.register('journal-sw.js').catch(() => {});
     });
   }
 
-  // ✏️ באנר התקנה מותאם אישית (מוצג רק אם הדפדפן תומך - בעיקר כרום/אנדרואיד)
   let deferredInstallPrompt = null;
   window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault();
