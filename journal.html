@@ -392,12 +392,12 @@
   const HEBREW_MONTHS = ['ינואר','פברואר','מרץ','אפריל','מאי','יוני','יולי','אוגוסט','ספטמבר','אוקטובר','נובמבר','דצמבר'];
 
   // ✏️ הדביקי כאן את כתובת ה-Web App שקיבלת מ-JournalCode.gs אחרי הפריסה
-  const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx9lgP-lvOAX6qloxrdmHE4L9Odxsdu-vO8DhYQ6vvEzpvXv4f0imr0ZjtOfgepdjGa/exec';
+  const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwWy14iKoAiAHig3lsJQfuZ3wqD0TdSW0ajMI0hACEUo_Zf-LyoFfl5fIEvOylWzMafiQ/exec';
 
   // ✏️ אותו Apps Script בדיוק ששולט על "קביעת תורים" באתר הלקוחות (miriamomesi.co.il) -
   // כדי שתור שנקבע כאן ייבדק ויירשם באותו מקום בדיוק, ולא ייווצרו התנגשויות בין תור
   // שנקבע כאן לתור שלקוחה קובעת בעצמה באתר
-  const BOOKING_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxqGHEFPrrOSrkD_MAei0nnCKjUjkMggbowUN_Gpg1wXGuXf7KLaz6GCuvf0TLA_nPTGQ/exec';
+  const BOOKING_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyxAAOeRv0GC5bbKco6LU6eUVID_StIp7TvJ5PACcrgffTpLB7dZSIjl3emVwYEVlOg0g/exec';
 
   // ✏️ רושמים את התוסף שמציג מספרים ישירות על העמודות בגרף (רק במקומות שנבקש זאת בפירוש)
   if(typeof ChartDataLabels !== 'undefined') Chart.register(ChartDataLabels);
@@ -410,7 +410,7 @@
   // ✏️ מנקה תווים בלתי-נראים (סימוני כיווניות שמקלדות מובייל בעברית לפעמים מוסיפות בלי
   // שרואים) - בלעדי זה שתי הקלדות של אותו שם יכולות "להיראות" זהות אבל לא להיות שוות בהשוואה
   function normalizeName(str){
-    return (str || '').replace(/[\u200E\u200F\u202A-\u202E\u2066-\u2069]/g, '').trim().toLowerCase();
+    return (str || '').replace(/[‎‏‪-‮⁦-⁩]/g, '').trim().toLowerCase();
   }
 
   async function login(){
