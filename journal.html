@@ -347,10 +347,10 @@
     </div>
 
     <div id="bkSlotsStep" style="display:none; margin-top:16px;">
-      <div class="form-label">בחירת שעה</div>
-      <div id="bkSlotsLoading" class="slots-note" style="display:none;">טוענת שעות פנויות...</div>
-      <div id="bkSlotsEmpty" class="slots-note" style="display:none;">אין תורים פנויים בתאריך זה, נסי תאריך אחר</div>
-      <div id="bkSlotsGrid" class="slots-grid"></div>
+      <div class="form-label">שעת התור</div>
+      <input type="time" id="bkTimeInput" step="900">
+      <div id="bkBookedNote" class="slots-note" style="display:none;"></div>
+      <button class="add-btn" type="button" onclick="confirmBkTime()">המשך</button>
     </div>
 
     <div id="bkFormStep" style="display:none; margin-top:16px;">
@@ -1041,7 +1041,6 @@
   const bkMaxDateObj = new Date(bkToday.getFullYear(), bkToday.getMonth() + 2, 1);
   const bkMaxYear = bkMaxDateObj.getFullYear(), bkMaxMonth = bkMaxDateObj.getMonth() + 1;
   let bkCalYear = bkMinYear, bkCalMonth = bkMinMonth;
-  let bkAvailability = {};
 
   function initBooking(){
     if(bkTreatmentsLoaded) return;
@@ -1083,7 +1082,7 @@
     bkTreatment = val;
     bkCalYear = bkMinYear;
     bkCalMonth = bkMinMonth;
-    loadBookingCalendarMonth();
+    renderBookingCalendar();
   });
 
   function changeBkMonth(delta){
@@ -1093,31 +1092,11 @@
     if(y < bkMinYear || (y === bkMinYear && m < bkMinMonth)) return;
     if(y > bkMaxYear || (y === bkMaxYear && m > bkMaxMonth)) return;
     bkCalYear = y; bkCalMonth = m;
-    loadBookingCalendarMonth();
+    renderBookingCalendar();
   }
 
-  async function loadBookingCalendarMonth(){
-    const loadingEl = document.getElementById('bkCalLoading');
-    const gridEl = document.getElementById('bkCalGrid');
-    loadingEl.style.display = 'block';
-    gridEl.innerHTML = '';
-    try{
-      const url = `${APPS_SCRIPT_URL}?action=getMonthAvailability&year=${bkCalYear}&month=${bkCalMonth}&treatment=${encodeURIComponent(bkTreatment)}`;
-      const res = await fetch(url);
-      const data = await res.json();
-      loadingEl.style.display = 'none';
-      if(!data.success){
-        showBkError(data.error || 'אירעה שגיאה בטעינת הזמינות');
-        return;
-      }
-      bkAvailability = data.days || {};
-      renderBookingCalendar();
-    }catch(err){
-      loadingEl.style.display = 'none';
-      showBkError('אירעה שגיאה, נסי שוב');
-    }
-  }
-
+  // ✏️ ביומן הפנימי (הצוות) כל תאריך עתידי פתוח לקביעת תור - בלי תלות בשעות
+  // הפתיחה שהוגדרו ללקוחות (אלה ממשיכות לחול רק על אתר הלקוחות עצמו)
   function renderBookingCalendar(){
     document.getElementById('bkMonthLabel').textContent = `${HEBREW_MONTHS[bkCalMonth-1]} ${bkCalYear}`;
     document.querySelectorAll('#viewBooking .client-cal-nav-btn')[0].disabled =
@@ -1129,6 +1108,7 @@
     grid.innerHTML = '';
     const firstWeekday = new Date(bkCalYear, bkCalMonth-1, 1).getDay();
     const daysInMonth = new Date(bkCalYear, bkCalMonth, 0).getDate();
+    const todayKey = dateKey(bkToday.getFullYear(), bkToday.getMonth()+1, bkToday.getDate());
 
     for(let i=0; i<firstWeekday; i++){
       const empty = document.createElement('div');
@@ -1137,64 +1117,51 @@
     }
     for(let d=1; d<=daysInMonth; d++){
       const key = dateKey(bkCalYear, bkCalMonth, d);
-      const isAvailable = !!bkAvailability[key];
+      const isPast = key < todayKey;
       const cell = document.createElement('div');
-      cell.className = 'client-cal-cell ' + (isAvailable ? 'available' : 'unavailable') + (key === bkSelectedDate ? ' selected' : '');
+      cell.className = 'client-cal-cell ' + (isPast ? 'unavailable' : 'available') + (key === bkSelectedDate ? ' selected' : '');
       cell.textContent = d;
-      if(isAvailable) cell.onclick = () => selectBkDate(key);
+      if(!isPast) cell.onclick = () => selectBkDate(key);
       grid.appendChild(cell);
     }
   }
 
-  function selectBkDate(key){
+  // ✏️ מציגה לידיעה בלבד אילו תורים כבר קיימים באותו יום - השרת ממילא ידחה
+  // ניסיון לקבוע תור שמתנגש עם תור קיים
+  async function selectBkDate(key){
     bkSelectedDate = key;
     bkSelectedTime = null;
     renderBookingCalendar();
     hideBkError();
+    document.getElementById('bkTimeInput').value = '';
+    document.getElementById('bkSlotsStep').style.display = 'block';
     document.getElementById('bkFormStep').style.display = 'none';
     document.getElementById('bkSuccessStep').style.display = 'none';
-    loadBookingSlots(key);
-  }
 
-  async function loadBookingSlots(dateStr){
-    const step = document.getElementById('bkSlotsStep');
-    const loadingEl = document.getElementById('bkSlotsLoading');
-    const emptyEl = document.getElementById('bkSlotsEmpty');
-    const gridEl = document.getElementById('bkSlotsGrid');
-    step.style.display = 'block';
-    gridEl.innerHTML = '';
-    emptyEl.style.display = 'none';
-    loadingEl.style.display = 'block';
+    const noteEl = document.getElementById('bkBookedNote');
+    noteEl.style.display = 'none';
     try{
-      const url = `${APPS_SCRIPT_URL}?action=getSlots&date=${encodeURIComponent(dateStr)}&treatment=${encodeURIComponent(bkTreatment)}`;
-      const res = await fetch(url);
+      const [y, m] = key.split('-');
+      const res = await fetch(`${APPS_SCRIPT_URL}?action=adminGetMonth&year=${y}&month=${parseInt(m,10)}&password=`);
       const data = await res.json();
-      loadingEl.style.display = 'none';
-      if(!data.success){
-        showBkError(data.error || 'אירעה שגיאה בטעינת השעות הפנויות');
-        return;
+      if(data.success){
+        const dayData = (data.days || {})[key];
+        const bookings = (dayData && dayData.bookings) || [];
+        if(bookings.length){
+          noteEl.textContent = 'תורים קיימים ביום זה: ' + bookings.map(b => b.time).join(', ');
+          noteEl.style.display = 'block';
+        }
       }
-      if(!data.slots || !data.slots.length){
-        emptyEl.style.display = 'block';
-        return;
-      }
-      data.slots.forEach(time => {
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = 'slot-btn';
-        btn.textContent = time;
-        btn.onclick = () => selectBkSlot(time);
-        gridEl.appendChild(btn);
-      });
-    }catch(err){
-      loadingEl.style.display = 'none';
-      showBkError('אירעה שגיאה, נסי שוב');
-    }
+    }catch(err){ /* אם זה נכשל, פשוט לא מציגים את הרשימה - עדיין אפשר לקבוע תור */ }
   }
 
-  function selectBkSlot(time){
+  function confirmBkTime(){
+    const time = document.getElementById('bkTimeInput').value;
+    if(!time){
+      showBkError('נא לבחור שעה');
+      return;
+    }
     bkSelectedTime = time;
-    document.querySelectorAll('#bkSlotsGrid .slot-btn').forEach(b => b.classList.toggle('selected', b.textContent === time));
     const dateObj = new Date(bkSelectedDate + 'T12:00:00');
     const formattedDate = dateObj.toLocaleDateString('he-IL', { day:'numeric', month:'long', year:'numeric' });
     document.getElementById('bkSummary').textContent = `${bkTreatment} · ${formattedDate} בשעה ${time}`;
@@ -1203,6 +1170,8 @@
     document.getElementById('bkSuccessStep').style.display = 'none';
   }
 
+  // ✏️ תור שנקבע כאן (staffBooking:true) מדלג בשרת על בדיקת שעות הפתיחה -
+  // רק בודק שאין התנגשות עם תור קיים באותו זמן
   async function submitStaffBooking(){
     hideBkError();
     const name = document.getElementById('bkName').value.trim();
@@ -1221,6 +1190,7 @@
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
         body: JSON.stringify({
           action: 'bookAppointment',
+          staffBooking: true,
           date: bkSelectedDate,
           time: bkSelectedTime,
           treatment: bkTreatment,
@@ -1230,7 +1200,7 @@
       const data = await res.json();
       if(!data.success){
         showBkError(data.error || 'התור לא נקבע - ייתכן שהשעה נתפסה, בחרי שעה אחרת');
-        loadBookingSlots(bkSelectedDate);
+        selectBkDate(bkSelectedDate);
         return;
       }
       document.getElementById('bkFormStep').style.display = 'none';
